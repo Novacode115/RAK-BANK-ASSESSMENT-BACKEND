@@ -1,0 +1,21 @@
+package com.rakbank.accountmanagement.util;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ResponseUtil {
+
+    public static Map<String, String> success(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", message);
+        return response;
+    }
+
+    public static Map<String, String> error(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", message);
+        return response;
+    }
+}

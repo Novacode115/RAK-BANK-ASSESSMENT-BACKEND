@@ -1,0 +1,5 @@
+package com.rakbank.accountmanagement.model;
+
+public class Account {
+
+}

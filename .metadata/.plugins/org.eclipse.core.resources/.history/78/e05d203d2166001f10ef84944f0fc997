@@ -1,0 +1,5 @@
+package com.rakbank.accountmanagement.controller;
+
+public class UserController {
+
+}

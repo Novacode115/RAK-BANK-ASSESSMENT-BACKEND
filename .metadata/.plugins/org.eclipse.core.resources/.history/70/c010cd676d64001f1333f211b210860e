@@ -1,0 +1,30 @@
+package com.rakbank.accountmanagement.service;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.model.Account;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+
+@Service
+public class AccountService {
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private ModelMapper modelMapper;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+	
+	public AccountDTO createAccount(AccountDTO accountDTO) {
+        accountDTO.setPassword(passwordEncoder.encode(accountDTO.getPassword()));
+        Account account = modelMapper.map(accountDTO, Account.class);
+        account = accountRepository.save(account);
+        return modelMapper.map(account, AccountDTO.class);
+    }
+
+}

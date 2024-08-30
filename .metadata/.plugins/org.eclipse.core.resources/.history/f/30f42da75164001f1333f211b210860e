@@ -1,0 +1,13 @@
+package com.rakbank.accountmanagement.service;
+
+@Service
+public class AccountService {
+	   @Autowired
+	    private AccountRepository accountRepository;
+
+	    @Autowired
+	    private ModelMapper modelMapper;
+
+	    @Autowired
+	    private BCryptPasswordEncoder passwordEncoder;
+}

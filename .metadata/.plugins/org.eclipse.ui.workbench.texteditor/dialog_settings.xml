@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="wrap" value="true"/>
+		<item key="casesensitive" value="false"/>
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<item key="selection" value="andCredentialsAreValid"/>
+		<list key="findhistory">
+			<item value="andCredentialsAreValid"/>
+			<item value="[ERROR] com.rakbank.accountmanagement.service.AccountServiceTest.whenLoginAccount_andCredentialsAreValid_thenReturnSuccessResponse -- Time elapsed: 0.015 s &lt;&lt;&lt; ERROR!"/>
+			<item value="BCryptPasswordEncoder"/>
+			<item value="UserDetailsService"/>
+			<item value="javax"/>
+			<item value="updatePassword"/>
+			<item value="setId"/>
+			<item value="Account"/>
+			<item value="spring-boot-starter-web"/>
+			<item value="&lt;dependency&gt;&#x0A;    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#x0A;    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;&#x0A;&lt;/dependency&gt;"/>
+			<item value="spring-boot-starter-test"/>
+			<item value="test"/>
+			<item value="jakarta"/>
+		</list>
+		<list key="replacehistory">
+			<item value="setAccountId"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="953"/>
+		<item key="DIALOG_Y_ORIGIN" value="460"/>
+		<item key="DIALOG_WIDTH" value="978"/>
+		<item key="DIALOG_HEIGHT" value="513"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-18|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+	</section>
+</section>

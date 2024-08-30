@@ -1,0 +1,5 @@
+package com.rakbank.accountmanagement.repository;
+
+public interface AccountRepository extends JpaRepository<Account, Long>{
+
+}

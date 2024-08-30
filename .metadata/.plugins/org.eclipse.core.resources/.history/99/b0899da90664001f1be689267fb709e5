@@ -1,0 +1,10 @@
+package com.rakbank.accountmanagement.model;
+
+
+import lombok.Data;
+
+
+public class Account {
+	
+
+}

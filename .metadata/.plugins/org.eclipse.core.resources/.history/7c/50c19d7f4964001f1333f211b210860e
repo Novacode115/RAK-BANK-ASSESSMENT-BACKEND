@@ -1,0 +1,5 @@
+package com.rakbank.accountmanagement.repository;
+
+public class AccountRepository {
+
+}

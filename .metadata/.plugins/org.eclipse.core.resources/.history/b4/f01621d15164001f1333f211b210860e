@@ -1,0 +1,17 @@
+package com.rakbank.accountmanagement.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+
+@Service
+public class AccountService {
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private ModelMapper modelMapper;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+}

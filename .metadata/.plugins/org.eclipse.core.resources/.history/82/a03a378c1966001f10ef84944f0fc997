@@ -1,0 +1,103 @@
+package com.rakbank.accountmanagement.service;
+
+import java.util.Map;
+import java.util.Optional;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.exception.EmailAlreadyExistsException;
+import com.rakbank.accountmanagement.model.Account;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+import com.rakbank.accountmanagement.util.ResponseUtil;
+
+@Service
+public class AccountService {
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private ModelMapper modelMapper;
+	
+	@Autowired
+    private SessionService sessionService;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+
+	public Map<String, Object> createAccount(AccountDTO accountDTO) {
+		if (accountRepository.existsByEmail(accountDTO.getEmail())) {
+			throw new EmailAlreadyExistsException("An account with this email already exists");
+		}
+
+		accountDTO.setPassword(passwordEncoder.encode(accountDTO.getPassword()));
+		Account account = modelMapper.map(accountDTO, Account.class);
+		account = accountRepository.save(account);
+		AccountDTO createdAccountDTO = modelMapper.map(account, AccountDTO.class);
+
+		return ResponseUtil.success(createdAccountDTO, "Account created successfully");
+	}
+
+	public Map<String, Object> loginAccount(AccountDTO accountDTO) {
+		Optional<Account> accountOptional = accountRepository.findByEmail(accountDTO.getEmail());
+		if (accountOptional.isPresent()) {
+			Account account = accountOptional.get();
+			if (passwordEncoder.matches(accountDTO.getPassword(), account.getPassword())) {
+				 String sessionId = sessionService.createSession(accountDTO.getEmail());
+		            Map<String, Object> response = new HashMap<>();
+		            response.put("sessionId", sessionId);
+				return ResponseUtil.success(null, "Login successful");
+			} else {
+				return ResponseUtil.error("Invalid credentials");
+			}
+		} else {
+			return ResponseUtil.error("Account not found");
+		}
+	}
+
+	public Map<String, Object> updatePassword(Long id, String newPassword) {
+	    Optional<Account> optionalAccount = accountRepository.findById(id);
+
+	    if (optionalAccount.isPresent()) {
+	        Account account = optionalAccount.get();
+	        account.setPassword(passwordEncoder.encode(newPassword));
+	        accountRepository.save(account);
+	        
+	        return ResponseUtil.success(account, "Password updated successfully");
+	    } else {
+	        return ResponseUtil.error("Account not found");
+	    }
+	}
+
+	public Optional<AccountDTO> getAccountById(Long id) {
+		return accountRepository.findById(id).map(account -> modelMapper.map(account, AccountDTO.class));
+	}
+
+	public Map<String, Object> updateAccount(Long id, AccountDTO accountDTO) {
+		Optional<Account> accountOptional = accountRepository.findById(id);
+		if (accountOptional.isPresent()) {
+			Account account = accountOptional.get();
+			// Update account fields
+			if (accountDTO.getFullName() != null)
+				account.setFullName(accountDTO.getFullName());
+			if (accountDTO.getEmail() != null)
+				account.setEmail(accountDTO.getEmail());
+			if (accountDTO.getPassword() != null) {
+				account.setPassword(passwordEncoder.encode(accountDTO.getPassword()));
+			}
+			accountRepository.save(account);
+			return ResponseUtil.success(modelMapper.map(account, AccountDTO.class), "Account updated successfully");
+		}
+		return ResponseUtil.error("Account not found");
+	}
+
+	public Map<String, Object> deleteAccount(Long id) {
+	    if (accountRepository.existsById(id)) {
+	        accountRepository.deleteById(id);
+	        return ResponseUtil.success(null, "Account deleted successfully.");
+	    } else {
+	    	return ResponseUtil.error("Account not found");
+	    }
+	}
+}

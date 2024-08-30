@@ -1,0 +1,27 @@
+package com.rakbank.accountmanagement.service;
+
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+public class SessionService {
+
+    private final Map<String, String> sessions = new HashMap<>();
+
+    public String createSession(String email) {
+        String sessionId = UUID.randomUUID().toString();
+        sessions.put(sessionId, email);
+        return sessionId;
+    }
+
+    public String getUserBySessionId(String sessionId) {
+        return sessions.get(sessionId);
+    }
+
+    public void invalidateSession(String sessionId) {
+        sessions.remove(sessionId);
+    }
+}

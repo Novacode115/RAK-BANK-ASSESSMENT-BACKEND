@@ -1,0 +1,5 @@
+package com.rakbank.accountmanagement.dto;
+
+public class AccountDTO {
+
+}

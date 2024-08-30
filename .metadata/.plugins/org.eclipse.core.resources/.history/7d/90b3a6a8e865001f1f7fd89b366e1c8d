@@ -1,0 +1,131 @@
+package com.rakbank.accountmanagement.service;
+
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.exception.EmailAlreadyExistsException;
+import com.rakbank.accountmanagement.model.Account;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import java.util.Map;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class AccountServiceTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private ModelMapper modelMapper;
+
+    @Mock
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private AccountService accountService;
+
+    private AccountDTO accountDTO;
+    private Account account;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Setup a mock AccountDTO and Account
+        accountDTO = new AccountDTO();
+        accountDTO.setEmail("test@example.com");
+        accountDTO.setPassword("password");
+
+        account = new Account();
+        account.setEmail("test@example.com");
+        account.setPassword("encodedPassword");
+    }
+
+    @Test
+    void whenCreateAccount_andEmailExists_thenThrowException() {
+        // Arrange
+        when(accountRepository.existsByEmail(accountDTO.getEmail())).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(EmailAlreadyExistsException.class, () -> accountService.createAccount(accountDTO));
+
+        verify(accountRepository, times(1)).existsByEmail(accountDTO.getEmail());
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+
+    @Test
+    void whenCreateAccount_andEmailDoesNotExist_thenReturnSuccessResponse() {
+        // Arrange
+        when(accountRepository.existsByEmail(accountDTO.getEmail())).thenReturn(false);
+        when(passwordEncoder.encode(accountDTO.getPassword())).thenReturn("encodedPassword");
+        when(modelMapper.map(any(AccountDTO.class), eq(Account.class))).thenReturn(account);
+        when(modelMapper.map(any(Account.class), eq(AccountDTO.class))).thenReturn(accountDTO);
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        // Act
+        Map<String, Object> response = accountService.createAccount(accountDTO);
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Account created successfully", response.get("message"));
+        assertNotNull(response.get("data"));
+
+        verify(accountRepository, times(1)).existsByEmail(accountDTO.getEmail());
+        verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void whenLoginAccount_andCredentialsAreValid_thenReturnSuccessResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Login successful", response.get("message"));
+        assertNull(response.get("data"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+
+    @Test
+    void whenLoginAccount_andCredentialsAreInvalid_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Invalid credentials", response.get("message"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+
+    @Test
+    void whenLoginAccount_andAccountNotFound_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.empty());
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Account not found", response.get("message"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+}

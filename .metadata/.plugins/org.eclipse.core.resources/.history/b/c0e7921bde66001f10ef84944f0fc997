@@ -1,0 +1,40 @@
+package com.rakbank.accountmanagement.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.headers.Header;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .components(new Components()
+                        .addParameters("Session-ID", new Parameter()
+                                .in("header")
+                                .name("Session-ID")
+                                .required(true)
+                                .schema(new StringSchema())
+                                .description("Session ID for authentication")));
+    }
+
+    @Bean
+    public OpenApiCustomizer globalHeaderOpenApiCustomizer() {
+        return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation ->
+                operation.addParametersItem(new Parameter()
+                        .in("header")
+                        .name("Session-ID")
+                        .required(true)
+                        .schema(new StringSchema())
+                        .description("Session ID for authentication"))
+        ));
+    }
+}

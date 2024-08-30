@@ -1,0 +1,54 @@
+package com.rakbank.accountmanagement.service;
+
+import java.util.Map;
+import java.util.Optional;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.exception.EmailAlreadyExistsException;
+import com.rakbank.accountmanagement.model.Account;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+import com.rakbank.accountmanagement.util.ResponseUtil;
+
+@Service
+public class AccountService {
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private ModelMapper modelMapper;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+
+	public Map<String, Object> createAccount(AccountDTO accountDTO) {
+		if (accountRepository.existsByEmail(accountDTO.getEmail())) {
+			throw new EmailAlreadyExistsException("An account with this email already exists");
+		}
+
+		accountDTO.setPassword(passwordEncoder.encode(accountDTO.getPassword()));
+		Account account = modelMapper.map(accountDTO, Account.class);
+		account = accountRepository.save(account);
+		AccountDTO createdAccountDTO = modelMapper.map(account, AccountDTO.class);
+
+		// Build success response using ResponseUtil
+		return ResponseUtil.success(createdAccountDTO, "Account created successfully");
+	}
+
+	public Map<String, Object> loginAccount(AccountDTO accountDTO) {
+		Optional<Account> accountOptional = accountRepository.findByEmail(accountDTO.getEmail());
+		if (accountOptional.isPresent()) {
+			Account account = accountOptional.get();
+			if (passwordEncoder.matches(accountDTO.getPassword(), account.getPassword())) {
+				return ResponseUtil.success(null, "Login successful");
+			} else {
+				return ResponseUtil.error("Invalid credentials");
+			}
+		} else {
+			return ResponseUtil.error("Account not found");
+		}
+	}
+}

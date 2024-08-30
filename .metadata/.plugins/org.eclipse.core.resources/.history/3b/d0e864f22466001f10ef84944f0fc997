@@ -1,0 +1,17 @@
+package com.rakbank.accountmanagement.config;
+
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+
+import com.rakbank.accountmanagement.service.SessionService;
+
+public class FilterConfig {
+	@Bean
+    public FilterRegistrationBean<SessionFilter> sessionFilter() {
+        FilterRegistrationBean<SessionFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new SessionFilter(new SessionService()));
+        registrationBean.addUrlPatterns("/rakbank/api/accounts/*"); 
+        return registrationBean;
+    }
+
+}

@@ -1,0 +1,226 @@
+package com.rakbank.accountmanagement.service;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.modelmapper.ModelMapper;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.exception.EmailAlreadyExistsException;
+import com.rakbank.accountmanagement.model.Account;
+import com.rakbank.accountmanagement.repository.AccountRepository;
+
+@SpringBootTest
+public class AccountServiceTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private ModelMapper modelMapper;
+
+    @Mock
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Mock
+    private SessionService sessionService; // Use @Mock instead of @MockBean
+
+    @InjectMocks
+    private AccountService accountService;
+
+    private AccountDTO accountDTO;
+    private Account account;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Setup a mock AccountDTO and Account
+        accountDTO = new AccountDTO();
+        accountDTO.setFullName("New Name");
+        accountDTO.setEmail("test@example.com");
+        accountDTO.setPassword("password");
+
+        account = new Account();
+        account.setAccountId(1L);
+        account.setFullName("Existing Name");
+        account.setEmail("test@example.com");
+        account.setPassword("encodedPassword");
+    }
+
+    @Test
+    void whenCreateAccount_andEmailExists_thenThrowException() {
+        // Arrange
+        when(accountRepository.existsByEmail(accountDTO.getEmail())).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(EmailAlreadyExistsException.class, () -> accountService.createAccount(accountDTO));
+
+        verify(accountRepository, times(1)).existsByEmail(accountDTO.getEmail());
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+
+    @Test
+    void whenCreateAccount_andEmailDoesNotExist_thenReturnSuccessResponse() {
+        // Arrange
+        when(accountRepository.existsByEmail(accountDTO.getEmail())).thenReturn(false);
+        when(passwordEncoder.encode(accountDTO.getPassword())).thenReturn("encodedPassword");
+        when(modelMapper.map(any(AccountDTO.class), eq(Account.class))).thenReturn(account);
+        when(modelMapper.map(any(Account.class), eq(AccountDTO.class))).thenReturn(accountDTO);
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        // Act
+        Map<String, Object> response = accountService.createAccount(accountDTO);
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Account created successfully", response.get("message"));
+        assertNotNull(response.get("data"));
+
+        verify(accountRepository, times(1)).existsByEmail(accountDTO.getEmail());
+        verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void whenLoginAccount_andCredentialsAreValid_thenReturnSuccessResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Login successful", response.get("message"));
+        assertNull(response.get("data"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+
+    @Test
+    void whenLoginAccount_andCredentialsAreInvalid_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Invalid credentials", response.get("message"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+
+    @Test
+    void whenLoginAccount_andAccountNotFound_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findByEmail(accountDTO.getEmail())).thenReturn(Optional.empty());
+
+        // Act
+        Map<String, Object> response = accountService.loginAccount(accountDTO);
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Account not found", response.get("message"));
+
+        verify(accountRepository, times(1)).findByEmail(accountDTO.getEmail());
+    }
+
+    @Test
+    void whenUpdatePassword_andAccountExists_thenReturnSuccessResponse() {
+        // Arrange
+        when(accountRepository.findById(account.getAccountId())).thenReturn(Optional.of(account));
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        // Act
+        Map<String, Object> response = accountService.updatePassword(account.getAccountId(), "newPassword");
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Password updated successfully", response.get("message"));
+        assertNotNull(response.get("data")); // Ensure this is not null
+
+        verify(accountRepository, times(1)).findById(account.getAccountId());
+        verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void whenUpdatePassword_andAccountNotFound_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findById(account.getAccountId())).thenReturn(Optional.empty());
+
+        // Act
+        Map<String, Object> response = accountService.updatePassword(account.getAccountId(), "newPassword");
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Account not found", response.get("message"));
+
+        verify(accountRepository, times(1)).findById(account.getAccountId());
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+
+    @Test
+    void whenUpdateAccount_andAccountExists_thenReturnSuccessResponse() {
+        // Arrange
+        Account updatedAccount = new Account();
+        updatedAccount.setAccountId(account.getAccountId());
+        updatedAccount.setFullName("Updated Name");
+        updatedAccount.setEmail("updated@example.com");
+        updatedAccount.setPassword("encodedPassword");
+
+        when(accountRepository.findById(account.getAccountId())).thenReturn(Optional.of(account));
+        when(modelMapper.map(any(AccountDTO.class), eq(Account.class))).thenReturn(updatedAccount);
+        when(modelMapper.map(any(Account.class), eq(AccountDTO.class))).thenReturn(accountDTO);
+        when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
+
+        // Act
+        Map<String, Object> response = accountService.updateAccount(account.getAccountId(), accountDTO);
+
+        // Assert
+        assertEquals("success", response.get("status"));
+        assertEquals("Account updated successfully", response.get("message"));
+        assertNotNull(response.get("data"));
+
+        verify(accountRepository, times(1)).findById(account.getAccountId());
+        verify(accountRepository, times(1)).save(any(Account.class));
+    }
+
+    @Test
+    void whenUpdateAccount_andAccountNotFound_thenReturnErrorResponse() {
+        // Arrange
+        when(accountRepository.findById(account.getAccountId())).thenReturn(Optional.empty());
+
+        // Act
+        Map<String, Object> response = accountService.updateAccount(account.getAccountId(), accountDTO);
+
+        // Assert
+        assertEquals("error", response.get("status"));
+        assertEquals("Account not found", response.get("message"));
+
+        verify(accountRepository, times(1)).findById(account.getAccountId());
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+}

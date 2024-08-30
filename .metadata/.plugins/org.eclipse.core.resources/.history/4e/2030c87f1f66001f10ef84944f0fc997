@@ -1,0 +1,18 @@
+package com.rakbank.accountmanagement.util;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+public class TokenUtils {
+
+    // Define a secret key for signing the JWT token
+    private static final String SECRET_KEY = "your_secret_key";
+
+    // Method to generate a JWT token
+    public static String generateToken(String username) {
+        return Jwts.builder()
+                   .setSubject(username) // Set the subject of the token to the username
+                   .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // Sign the token with the secret key and HS256 algorithm
+                   .compact(); // Compact the token into its final form
+    }
+}

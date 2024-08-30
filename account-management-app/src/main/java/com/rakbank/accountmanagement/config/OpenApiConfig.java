@@ -1,0 +1,49 @@
+package com.rakbank.accountmanagement.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+public class OpenApiConfig {
+
+    private static final List<String> EXCLUDED_PATHS = Arrays.asList("/users/register", "/users/login");
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI().components(new Components().addParameters("Session-ID", new Parameter()
+                .in("header")
+                .name("Session-ID")
+                .required(true)
+                .schema(new StringSchema())
+                .description("Session ID for authentication")));
+    }
+
+    @Bean
+    public OpenApiCustomizer globalHeaderOpenApiCustomizer() {
+        return openApi -> openApi.getPaths().forEach((path, pathItem) -> {
+            pathItem.readOperations().forEach(operation -> {
+                // Only add the header if the path is not in the excluded list
+                if (!isExcludedPath(path)) {
+                    operation.addParametersItem(new Parameter()
+                            .in("header")
+                            .name("Session-ID")
+                            .required(true)
+                            .schema(new StringSchema())
+                            .description("Session ID for authentication"));
+                }
+            });
+        });
+    }
+
+    private boolean isExcludedPath(String path) {
+        // Check if the path matches any of the excluded paths
+        return EXCLUDED_PATHS.stream().anyMatch(excludedPath -> path.matches(excludedPath));
+    }
+}

@@ -1,0 +1,76 @@
+package com.rakbank.accountmanagement.controller;
+
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.rakbank.accountmanagement.dto.AccountDTO;
+import com.rakbank.accountmanagement.dto.PasswordUpdateRequest;
+import com.rakbank.accountmanagement.service.AccountService;
+import org.springframework.web.bind.annotation.PatchMapping;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/rakbank/api/accounts")
+public class AccountController {
+	@Autowired
+	private AccountService accountService;
+
+	@PostMapping("/register")
+	public ResponseEntity<Map<String, Object>> registerAccount(@Valid @RequestBody AccountDTO accountDTO) {
+		Map<String, Object> response = accountService.createAccount(accountDTO);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	@PostMapping("/login")
+	public Map<String, Object> loginAccount(@RequestBody AccountDTO accountDTO) {
+		return accountService.loginAccount(accountDTO);
+	}
+
+	@PatchMapping("/{id}/password")
+	public ResponseEntity<Map<String, Object>> updatePassword(@PathVariable Long id,
+			@RequestBody PasswordUpdateRequest request) {
+		Map<String, Object> response = accountService.updatePassword(id, request.getNewPassword());
+		String status = (String) response.get("status");
+		if ("success".equals(status)) {
+			return ResponseEntity.ok(response);
+		} else {
+			return ResponseEntity.status(404).body(response);
+		}
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<Map<String, Object>> updateAccount(@PathVariable Long id,
+			@RequestBody AccountDTO accountDTO) {
+
+		Map<String, Object> response = accountService.updateAccount(id, accountDTO);
+		String status = (String) response.get("status");
+		if ("success".equals(status)) {
+			return ResponseEntity.ok(response);
+		} else {
+			return ResponseEntity.status(404).body(response);
+		}
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<AccountDTO> getAccountById(@PathVariable Long id) {
+		return accountService.getAccountById(id).map(ResponseEntity::ok)
+				.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
+		accountService.deleteAccount(id);
+		return ResponseEntity.noContent().build();
+	}
+
+}
