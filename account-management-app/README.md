@@ -112,7 +112,7 @@ This will generate a sample Session-ID which we will pass as header for the belo
 
 - **Endpoint:** `PATCH /users/1?&Session-ID=78a8730d-3f6b-4e3d-a80a-e2be957c2402`
 - **Header:** Session-ID from login success response data
-- **Description:** Updates user details.
+- **Description:** get user details by id.
 - **Request Body:** 
   ```json
  {
@@ -123,12 +123,12 @@ This will generate a sample Session-ID which we will pass as header for the belo
 
 - **Endpoint:** `DELETE /users/1`
 - **Header:** Session-ID from login success response data
-- **Description:** Updates user details.
+- **Description:** Deletes user.
 
    ### 6. Get all Users 
 
-- **Endpoint:** `DELETE /users/1`
+- **Endpoint:** `GET /users`
 - **Header:** Session-ID from login success response data
-- **Description:** Updates user details.
+- **Description:** deletes user details.
   
   
